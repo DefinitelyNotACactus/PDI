@@ -1,5 +1,11 @@
 # PDI
 
+## Dependências
+``` $pip3 install pillow
+$pip3 install numpy
+$pip3 install scipy
+```
+
 ## Primeiro Trabalho
 
 Introdução ao Processamento Digital de Imagens 
