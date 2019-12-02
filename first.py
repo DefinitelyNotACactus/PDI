@@ -6,10 +6,10 @@ def main():
     img = Image.open("./images/lula_rindo.jpg") # abre o arquivo de imagem
     img_array = np.asarray(img) # transforma a imagem em array
     #img2 = banda_individual("G", img_array, True)
-    img2 = brilho_multiplicativo(img_array, False, c = 2)
+    #img2 = brilho_multiplicativo(img_array, False, c = 2)
     #img2 = negativo("RGB", img_array)
-    #img2 = filtro_mediana(img_array, 5, 5)
-    #img2 = filtro_moda(img_array, 4, 4)
+    #img2 = filtro_mediana(img_array, 3, 3)
+    img2 = filtro_moda(img_array, 3, 3)
     img2.show() # mostra a imagem nova
     #dummy_array = conversor(img_array, True)
     #dummy_array = conversor(dummy_array, False)
@@ -43,6 +43,7 @@ def rgb_yiq(img_array):
             dummy_img_array[i][j][0] = 0.299 * img_array[i][j][0] + 0.587 * img_array[i][j][1] + 0.114 * img_array[i][j][2]
             dummy_img_array[i][j][1] = 0.596 * img_array[i][j][0] - 0.274 * img_array[i][j][1] - 0.322 * img_array[i][j][2]
             dummy_img_array[i][j][2] = 0.211 * img_array[i][j][0] - 0.523 * img_array[i][j][1] + 0.312 * img_array[i][j][2]
+            
     return dummy_img_array
     
 # Conversão de YIQ para RGB
@@ -62,8 +63,7 @@ def yiq_rgb(img_array):
                 elif dummy_img_array[i][j][k] < 0:
                     dummy_img_array[i][j][k] = 0
     
-    #dummy_img_array = np.uint8(dummy_img_array)
-    return dummy_img_array
+    return np.uint8(dummy_img_array)
     
 # Exibição de bandas individuais (R, G e B) como imagens monocromáticas ou coloridas (em tons de R, G ou B, respectivamente)
 def banda_individual(banda, img_array, colorido):
@@ -147,48 +147,57 @@ def brilho_multiplicativo(img_array, rgb = True, c = 1.0):
                 for j in range(len(img_array[0])): # itera pelas colunas
                     y = dummy_img_array[i][j][0].copy()
                     y = y * c
-                    if y > 255: # verificar limites
-                        y = 255
-                    elif y < 0: # imagino que isso nao ocorre pois c >= 0
-                        y = 0
                     dummy_img_array[i][j][0] = y
             dummy_img_array = conversor(dummy_img_array, False) # retornar para rgb
             
         return Image.fromarray(dummy_img_array, mode = "RGB") # retorna a imagem transformada
 
 def filtro_mediana(img_array, m, n):
-    dummy_img_array = img_array.copy()
     if m >= 1 and n >= 1:
         pivo_i = int(m % 2 == 0)
         pivo_j = int(n % 2 == 0)
         limite_i = m//2
         limite_j = n//2
-        for i in range(limite_i - pivo_i, len(img_array) - limite_i): # s/ extensao
-            for j in range(limite_j - pivo_j, len(img_array[0]) - limite_j):
+        dummy_img_array = np.zeros((len(img_array) - limite_i, len(img_array[0]) - limite_j, 3), dtype = int)
+        x = 0
+        y = 0
+        for i in range(limite_i - pivo_i, len(img_array) - limite_i + 1): # s/ extensao
+            y = 0
+            for j in range(limite_j - pivo_j, len(img_array[0]) - limite_j + 1):
                 vizinhosR = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 0]
                 vizinhosG = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 1]
                 vizinhosB = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 2]
                 mediana = [np.median(vizinhosR), np.median(vizinhosG), np.median(vizinhosB)]
-                dummy_img_array[i][j] = mediana
-
-    return Image.fromarray(dummy_img_array, mode = "RGB") # retorna a imagem transformada
+                dummy_img_array[x][y] = mediana
+                y += 1
+            x += 1
+        return Image.fromarray(np.uint8(dummy_img_array), mode = "RGB") # retorna a imagem transformada
+    else:
+        return img_array
     
 def filtro_moda(img_array, m, n):
-    dummy_img_array = img_array.copy()
     if m >= 1 and n >= 1:
         pivo_i = int(m % 2 == 0)
         pivo_j = int(n % 2 == 0)
         limite_i = m//2
         limite_j = n//2
-        for i in range(limite_i - pivo_i, len(img_array) - limite_i): # s/ extensao
-            for j in range(limite_j - pivo_j, len(img_array[0]) - limite_j):
+        dummy_img_array = np.zeros((len(img_array) - limite_i, len(img_array[0]) - limite_j, 3), dtype = int)
+        x = 0
+        y = 0
+        for i in range(limite_i - pivo_i, len(img_array) - limite_i + 1): # s/ extensao
+            y = 0
+            for j in range(limite_j - pivo_j, len(img_array[0]) - limite_j + 1):
                 vizinhosR = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 0]
                 vizinhosG = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 1]
                 vizinhosB = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 2]
                 moda = [stats.mode(vizinhosR)[0][0][0], stats.mode(vizinhosG)[0][0][0], stats.mode(vizinhosB)[0][0][0]]
-                dummy_img_array[i][j] = moda
+                dummy_img_array[x][y] = moda
+                y += 1
+            x += 1
 
-    return Image.fromarray(dummy_img_array, mode = "RGB") # retorna a imagem transformada
-    
+        return Image.fromarray(np.uint8(dummy_img_array), mode = "RGB") # retorna a imagem transformada
+    else:
+        return img_array
+        
 if __name__ == "__main__":
     main()
