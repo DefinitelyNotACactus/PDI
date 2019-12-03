@@ -8,8 +8,8 @@ def main():
     #img2 = banda_individual("G", img_array, True)
     #img2 = brilho_multiplicativo(img_array, False, c = 2)
     #img2 = negativo("RGB", img_array)
-    #img2 = filtro_mediana(img_array, 3, 3)
-    img2 = filtro_moda(img_array, 3, 3)
+    img2 = filtro_mediana(img_array, 9, 9)
+    #img2 = filtro_moda(img_array, 3, 3)
     img2.show() # mostra a imagem nova
     #dummy_array = conversor(img_array, True)
     #dummy_array = conversor(dummy_array, False)
@@ -161,9 +161,9 @@ def filtro_mediana(img_array, m, n):
         dummy_img_array = np.zeros((len(img_array) - limite_i, len(img_array[0]) - limite_j, 3), dtype = int)
         x = 0
         y = 0
-        for i in range(limite_i - pivo_i, len(img_array) - limite_i + 1): # s/ extensao
+        for i in range(limite_i - pivo_i, len(img_array)): # s/ extensao
             y = 0
-            for j in range(limite_j - pivo_j, len(img_array[0]) - limite_j + 1):
+            for j in range(limite_j - pivo_j, len(img_array[0])):
                 vizinhosR = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 0]
                 vizinhosG = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 1]
                 vizinhosB = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 2]
@@ -184,9 +184,9 @@ def filtro_moda(img_array, m, n):
         dummy_img_array = np.zeros((len(img_array) - limite_i, len(img_array[0]) - limite_j, 3), dtype = int)
         x = 0
         y = 0
-        for i in range(limite_i - pivo_i, len(img_array) - limite_i + 1): # s/ extensao
+        for i in range(limite_i - pivo_i, len(img_array)): # s/ extensao
             y = 0
-            for j in range(limite_j - pivo_j, len(img_array[0]) - limite_j + 1):
+            for j in range(limite_j - pivo_j, len(img_array[0])):
                 vizinhosR = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 0]
                 vizinhosG = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 1]
                 vizinhosB = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 2]
