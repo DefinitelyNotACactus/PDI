@@ -1,30 +1,145 @@
 from PIL import Image
 from scipy import stats
 import numpy as np
+import sys
 
 def main():
-    img = Image.open("./images/lula_rindo.jpg") # abre o arquivo de imagem
-    img_array = np.asarray(img) # transforma a imagem em array
-    #img2 = banda_individual("G", img_array, True)
-    #img2 = brilho_multiplicativo(img_array, False, c = 2)
-    #img2 = negativo("RGB", img_array)
-    img2 = filtro_mediana(img_array, 9, 9)
-    #img2 = filtro_moda(img_array, 3, 3)
-    img2.show() # mostra a imagem nova
-    #dummy_array = conversor(img_array, True)
-    #dummy_array = conversor(dummy_array, False)
-    '''
-    erros = 0
-    erros_possiveis = len(img_array) * len(img_array[0]) * 3
-    for i in range(len(img_array)):
-        for j in range(len(img_array[0])):
-            for k in range(3):
-                if dummy_array[i][j][k] != img_array[i][j][k]:
-                    print("(I = ", i, ", J = ", j, ", K = ", k, ") Dummy: ", dummy_array[i][j][k], " Original: ", img_array[i][j][k])
-                    erros += 1
-    print("Total erros: ", erros, "Erros possiveis: ", erros_possiveis, "(PCT: ", erros/erros_possiveis, "%)")
-    '''
-    
+    print("Bem vindo ao T1 de PDI 2019.2")
+    while(True):
+        manipulacao = False
+        try:
+            op = int(input("Menu principal\nOpções:\n1 - Conversão RGB -> YIQ -> RGB\n2 - Exibição de banda individual\n3 - Negativo\n4 - Controle de brilho multiplicativo\n5 - Convolução m x n\n6 - Filtro mediana e moda m x n\n0 - Sair\nOpção = "))
+        except:
+            break
+            
+        if op == 0:
+            break
+            
+        if op >= 1 and op <= 6:
+            img = escolherImagem()
+            img_array = np.asarray(img)
+            img2 = None
+            
+        if op == 1: # conversao
+            try:
+                op = int(input("Opções:\n 1 - RGB -> YIQ \n 2 - YIQ -> RGB \n 3 - RGB -> YIQ -> RGB\n Qualquer outra coisa - retornar\nOpção = "))
+            except:
+                op = -1
+                
+            if op == 1 or op == 2:
+                print("Convertendo...")
+                dummy_array = conversor(img_array, True if op == 1 else False)
+                print("Feito!")
+                #manipulacao = False
+            elif op == 3:
+                print("Convertendo...")
+                dummy_array = conversor(img_array, True)
+                dummy_array = conversor(dummy_array, False)
+                print("Feito!")
+                #manipulacao = False
+                
+        elif op == 2: # banda individual
+            try:
+                op = int(input("Opções:\n1 - R \n2 - G \n3 - B\nQualquer outra coisa - retornar\nOpção = "))
+            except:
+                op = -1
+            if op >= 1 and op <= 3:
+                try:
+                    op2 = int(input("Monocromático:\n1 - Sim \nQualquer outra coisa - Não\nMonocromático = "))
+                except:
+                    op2 = -1
+                    
+                print("Manipulando...")
+                if op == 1:
+                    img2 = banda_individual("R", img_array, True if op2 == 1 else False)
+                elif op == 2:
+                    img2 = banda_individual("G", img_array, True if op2 == 1 else False)
+                elif op == 3:
+                    img2 = banda_individual("B", img_array, True if op2 == 1 else False)
+                print("Feito!")
+                manipulacao = True
+            
+        elif op == 3: # negativo
+            try:
+                op = int(input("Opções:\n1 - Operação em RGB \n2 - Operação em Y\nQualquer outra coisa - retornar\nOpção = "))
+            except:
+                op = -1
+                
+            print("Manipulando...")
+            if op == 1:
+                img2 = negativo("RGB", img_array)
+            elif op == 2:
+                img2 = negativo("Y", img_array)
+            print("Feito!")
+            manipulacao = True
+            
+        elif op == 4: # brilho multiplicativo
+            try:
+                c = int(input("Insira o valor de c: "))
+            except:
+                c = 1
+            try:
+                op = int(input("Opções:\n1 - Operação em RGB \n2 - Operação em Y\nQualquer outra coisa - retornar\nOpção = "))
+            except:
+                op = -1
+                
+            print("Manipulando...")
+            if op == 1:
+                img2 = brilho_multiplicativo(img_array, True, c)
+            elif op == 2:
+                img2 = brilho_multiplicativo(img_array, False, c)
+            print("Feito!")
+            manipulacao = True
+            
+        elif op == 5: # convolucao
+            print("TODO!")
+            
+        elif op == 6: # mediana e moda
+            try:
+                m = int(input("Insira o valor de m: "))
+                n = int(input("Insira o valor de n: "))
+                op = int(input("Opções:\n1 - Mediana \n2 - Moda\nQualquer outro número - retornar\nOpção = "))
+                print("Manipulando...")
+                if op == 1: # mediana
+                    img2 = filtro_moda_mediana(img_array, m, n, True)
+                elif op == 2: # moda
+                    img2 = filtro_moda_mediana(img_array, m, n, False)
+                print("Feito!")
+                manipulacao = True
+            except:
+                print("Insira valores válidos!")
+                    
+        if manipulacao:
+            visualizar_salvar(img2)
+            
+def visualizar_salvar(img):
+    try:
+        op = int(input("Deseja visualizar a imagem manipulada?\n1 - Sim \nQualquer outra coisa - Não\nVisualizar = "))
+    except:
+        op = -1
+    if op == 1:
+        img.show()
+        try:
+            op = int(input("Deseja salvar a imagem manipulada?\n1 - Sim \nQualquer outra coisa - Não\nSalvar = "))
+        except:
+            op = -1
+        if op == 1:
+            nome_img = str(input("Insira o nome da imagem para ser salva: "))
+            try:
+                img.save(nome_img)
+                print("A imagem foi salva no diretório atual")
+            except:
+                print("Erro ao salvar a imagem, abortando...")
+                sys.exit()
+                
+def escolherImagem():
+    try:
+        img = Image.open(str(input("Insira o endereço da imagem: ")))
+        return img
+    except:
+        print("Não foi possível abrir a imagem, abortando...")
+        sys.exit()
+
 # Interface para conversão RGB-YIQ-RGB
 def conversor(img_array, rgb = True):
     if rgb:
@@ -152,7 +267,7 @@ def brilho_multiplicativo(img_array, rgb = True, c = 1.0):
             
         return Image.fromarray(dummy_img_array, mode = "RGB") # retorna a imagem transformada
 
-def filtro_mediana(img_array, m, n):
+def filtro_moda_mediana(img_array, m, n, mediana = True):
     if m >= 1 and n >= 1:
         pivo_i = int(m % 2 == 0)
         pivo_j = int(n % 2 == 0)
@@ -160,41 +275,19 @@ def filtro_mediana(img_array, m, n):
         limite_j = n//2
         dummy_img_array = np.zeros((len(img_array) - limite_i, len(img_array[0]) - limite_j, 3), dtype = int)
         x = 0
-        y = 0
-        for i in range(limite_i - pivo_i, len(img_array)): # s/ extensao
+        for i in range(limite_i - pivo_i, len(img_array) - pivo_i): # s/ extensao
             y = 0
-            for j in range(limite_j - pivo_j, len(img_array[0])):
+            for j in range(limite_j - pivo_j, len(img_array[0]) - pivo_j):
                 vizinhosR = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 0]
                 vizinhosG = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 1]
                 vizinhosB = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 2]
-                mediana = [np.median(vizinhosR), np.median(vizinhosG), np.median(vizinhosB)]
-                dummy_img_array[x][y] = mediana
+                if mediana:
+                    g = [np.median(vizinhosR), np.median(vizinhosG), np.median(vizinhosB)]
+                else:
+                    g = [stats.mode(vizinhosR)[0][0][0], stats.mode(vizinhosG)[0][0][0], stats.mode(vizinhosB)[0][0][0]]
+                dummy_img_array[x][y] = g
                 y += 1
             x += 1
-        return Image.fromarray(np.uint8(dummy_img_array), mode = "RGB") # retorna a imagem transformada
-    else:
-        return img_array
-    
-def filtro_moda(img_array, m, n):
-    if m >= 1 and n >= 1:
-        pivo_i = int(m % 2 == 0)
-        pivo_j = int(n % 2 == 0)
-        limite_i = m//2
-        limite_j = n//2
-        dummy_img_array = np.zeros((len(img_array) - limite_i, len(img_array[0]) - limite_j, 3), dtype = int)
-        x = 0
-        y = 0
-        for i in range(limite_i - pivo_i, len(img_array)): # s/ extensao
-            y = 0
-            for j in range(limite_j - pivo_j, len(img_array[0])):
-                vizinhosR = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 0]
-                vizinhosG = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 1]
-                vizinhosB = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 2]
-                moda = [stats.mode(vizinhosR)[0][0][0], stats.mode(vizinhosG)[0][0][0], stats.mode(vizinhosB)[0][0][0]]
-                dummy_img_array[x][y] = moda
-                y += 1
-            x += 1
-
         return Image.fromarray(np.uint8(dummy_img_array), mode = "RGB") # retorna a imagem transformada
     else:
         return img_array
