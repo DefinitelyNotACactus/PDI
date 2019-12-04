@@ -315,6 +315,7 @@ def convolucao(img_array, filtro_array):
             for j in range(limite_j - pivo_j, len(img_array[0]) - pivo_j):
                 pixel = [0, 0, 0]
                 xm = 0
+                print(y)
                 for k in range(i - limite_i + pivo_i, i + limite_i):
                     ym = 0
                     for l in range(j - limite_j + pivo_j, j + limite_j):
@@ -323,7 +324,6 @@ def convolucao(img_array, filtro_array):
                         pixel[2] += img_array[k][l][2] * conv2[xm][ym]
 
                         ym += 1
-                    x += 1
 
                 for k in range(3):
                         if pixel[k] > 255: # verificar limites
@@ -331,7 +331,9 @@ def convolucao(img_array, filtro_array):
                         elif pixel[k] < 0:
                             pixel[k] = 0
 
-                dummy_img_array[i][j] = pixel
+                dummy_img_array[x][y] = pixel
+                y += 1
+            x += 1
     
         return Image.fromarray(np.uint8(dummy_img_array), mode = "RGB") # retorna a imagem transformada
 
