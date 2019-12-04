@@ -92,8 +92,9 @@ def main():
             manipulacao = True
             
         elif op == 5: # convolucao
-            print("TODO!")
-            
+            filtro_array = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
+            img2 = convolucao(img_array, filtro_array)
+            manipulacao = True
         elif op == 6: # mediana e moda
             try:
                 m = int(input("Insira o valor de m: "))
@@ -291,6 +292,49 @@ def filtro_moda_mediana(img_array, m, n, mediana = True):
         return Image.fromarray(np.uint8(dummy_img_array), mode = "RGB") # retorna a imagem transformada
     else:
         return img_array
-        
+
+def convolucao(img_array, filtro_array):
+    conv1 = []
+    for i in range(len(filtro_array)):
+        conv1.append(list(reversed(filtro_array[i])))
+
+    conv2 = list(reversed(conv1))
+
+    m = len(conv2)
+    n = len(conv2[0])
+
+    if m >= 1 and n >= 1:
+        pivo_i = int(m % 2 == 0)
+        pivo_j = int(n % 2 == 0)
+        limite_i = m//2
+        limite_j = n//2
+        dummy_img_array = np.zeros((len(img_array) - limite_i, len(img_array[0]) - limite_j, 3), dtype = int)
+        x = 0
+        for i in range(limite_i - pivo_i, len(img_array) - pivo_i): # s/ extensao
+            y = 0
+            for j in range(limite_j - pivo_j, len(img_array[0]) - pivo_j):
+                pixel = [0, 0, 0]
+                xm = 0
+                for k in range(i - limite_i + pivo_i, i + limite_i):
+                    ym = 0
+                    for l in range(j - limite_j + pivo_j, j + limite_j):
+                        pixel[0] += img_array[k][l][0] * conv2[xm][ym]
+                        pixel[1] += img_array[k][l][1] * conv2[xm][ym]
+                        pixel[2] += img_array[k][l][2] * conv2[xm][ym]
+
+                        ym += 1
+                    x += 1
+
+                for k in range(3):
+                        if pixel[k] > 255: # verificar limites
+                            pixel[k] = 255
+                        elif pixel[k] < 0:
+                            pixel[k] = 0
+
+                dummy_img_array[i][j] = pixel
+    
+        return Image.fromarray(np.uint8(dummy_img_array), mode = "RGB") # retorna a imagem transformada
+
+
 if __name__ == "__main__":
     main()
