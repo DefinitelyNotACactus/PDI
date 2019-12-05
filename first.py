@@ -99,7 +99,7 @@ def main():
             manipulacao = True
             
         elif op == 6: # mediana e moda
-            try:
+            #try:
                 m = int(input("Insira o valor de m: "))
                 n = int(input("Insira o valor de n: "))
                 op = int(input("Opções:\n1 - Mediana \n2 - Moda\nQualquer outro número - retornar\nOpção = "))
@@ -110,8 +110,8 @@ def main():
                     img2 = filtro_moda_mediana(img_array, m, n, False)
                 print("Feito!")
                 manipulacao = True
-            except:
-                print("Insira valores válidos!")
+            #except:
+            #    print("Insira valores válidos!")
                     
         if manipulacao:
             visualizar_salvar(img2)
@@ -131,7 +131,7 @@ def lerMascara():
             else:
                 ml = []
                 for x in range(n):
-                    ml.append(int(s[x]))
+                    ml.append(float(s[x]))
                 mascara.append(ml)
             i += 1
         return mascara
@@ -300,11 +300,11 @@ def filtro_moda_mediana(img_array, m, n, mediana = True):
         pivo_j = int(n % 2 == 0)
         limite_i = m//2
         limite_j = n//2
-        dummy_img_array = np.zeros((len(img_array) - limite_i, len(img_array[0]) - limite_j, 3), dtype = int)
+        dummy_img_array = np.zeros((len(img_array) - (2 * limite_i), len(img_array[0]) - (2 * limite_j), 3), dtype = int)
         x = 0
-        for i in range(limite_i - pivo_i, len(img_array) - pivo_i): # s/ extensao
+        for i in range(limite_i - pivo_i, len(img_array) - limite_i - pivo_i): # s/ extensao
             y = 0
-            for j in range(limite_j - pivo_j, len(img_array[0]) - pivo_j):
+            for j in range(limite_j - pivo_j, len(img_array[0]) - limite_j - pivo_j):
                 vizinhosR = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 0]
                 vizinhosG = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 1]
                 vizinhosB = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 2]
@@ -325,6 +325,7 @@ def convolucao(img_array, filtro_array):
         conv1.append(list(reversed(filtro_array[i])))
 
     conv2 = list(reversed(conv1))
+    print(conv2)
 
     m = len(conv2)
     n = len(conv2[0])
@@ -334,20 +335,21 @@ def convolucao(img_array, filtro_array):
         pivo_j = int(n % 2 == 0)
         limite_i = m//2
         limite_j = n//2
-        dummy_img_array = np.zeros((len(img_array) - limite_i, len(img_array[0]) - limite_j, 3), dtype = int)
+        dummy_img_array = np.zeros((len(img_array) - (2 * limite_i), len(img_array[0]) - (2 * limite_j), 3), dtype = int)
         x = 0
-        for i in range(limite_i - pivo_i, len(img_array) - pivo_i): # s/ extensao
+        for i in range(limite_i - pivo_i, len(img_array) - limite_i - pivo_i): # s/ extensao
             y = 0
-            for j in range(limite_j - pivo_j, len(img_array[0]) - pivo_j):
+            for j in range(limite_j - pivo_j, len(img_array[0]) - limite_j - pivo_j):
                 pixel = [0, 0, 0]
                 xm = 0
-                for k in range(i - limite_i + pivo_i, i + limite_i):
+                for k in range(i - limite_i + pivo_i, i + limite_i + 1):
                     ym = 0
-                    for l in range(j - limite_j + pivo_j, j + limite_j):
+                    for l in range(j - limite_j + pivo_j, j + limite_j + 1):
                         pixel[0] += img_array[k][l][0] * conv2[xm][ym]
                         pixel[1] += img_array[k][l][1] * conv2[xm][ym]
                         pixel[2] += img_array[k][l][2] * conv2[xm][ym]
                         ym += 1
+                    xm += 1
 
                 for k in range(3):
                         if pixel[k] > 255: # verificar limites
