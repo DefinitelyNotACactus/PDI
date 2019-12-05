@@ -51,11 +51,11 @@ def main():
                     
                 print("Manipulando...")
                 if op == 1:
-                    img2 = banda_individual("R", img_array, True if op2 == 1 else False)
+                    img2 = banda_individual("R", img_array, True if op2 == 0 else False)
                 elif op == 2:
-                    img2 = banda_individual("G", img_array, True if op2 == 1 else False)
+                    img2 = banda_individual("G", img_array, True if op2 == 0 else False)
                 elif op == 3:
-                    img2 = banda_individual("B", img_array, True if op2 == 1 else False)
+                    img2 = banda_individual("B", img_array, True if op2 == 0 else False)
                 print("Feito!")
                 manipulacao = True
             
@@ -92,9 +92,12 @@ def main():
             manipulacao = True
             
         elif op == 5: # convolucao
-            filtro_array = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
-            img2 = convolucao(img_array, filtro_array)
+            mascara = lerMascara()
+            print("Manipulando...")
+            img2 = convolucao(img_array, mascara)
+            print("Feito!")
             manipulacao = True
+            
         elif op == 6: # mediana e moda
             try:
                 m = int(input("Insira o valor de m: "))
@@ -113,6 +116,29 @@ def main():
         if manipulacao:
             visualizar_salvar(img2)
             
+def lerMascara():
+    arq = str(input("Insira o endereço da mascara: "))
+    try:
+        f = open(arq, "r")
+        txt = f.readlines()
+        m, n, i = 0, 0, 0
+        mascara = []
+        for line in txt:
+            s = line.split()
+            if i == 0:
+                m = int(s[0])
+                n = int(s[1])
+            else:
+                ml = []
+                for x in range(n):
+                    ml.append(int(s[x]))
+                mascara.append(ml)
+            i += 1
+        return mascara
+    except:
+        print("Erro ao abrir a máscara, abortando...")
+        sys.exit()
+        
 def visualizar_salvar(img):
     try:
         op = int(input("Deseja visualizar a imagem manipulada?\n1 - Sim \nQualquer outra coisa - Não\nVisualizar = "))
@@ -315,14 +341,12 @@ def convolucao(img_array, filtro_array):
             for j in range(limite_j - pivo_j, len(img_array[0]) - pivo_j):
                 pixel = [0, 0, 0]
                 xm = 0
-                print(y)
                 for k in range(i - limite_i + pivo_i, i + limite_i):
                     ym = 0
                     for l in range(j - limite_j + pivo_j, j + limite_j):
                         pixel[0] += img_array[k][l][0] * conv2[xm][ym]
                         pixel[1] += img_array[k][l][1] * conv2[xm][ym]
                         pixel[2] += img_array[k][l][2] * conv2[xm][ym]
-
                         ym += 1
 
                 for k in range(3):
