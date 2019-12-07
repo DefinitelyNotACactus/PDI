@@ -75,9 +75,9 @@ def main():
             
         elif op == 4: # brilho multiplicativo
             try:
-                c = int(input("Insira o valor de c: "))
+                c = float(input("Insira o valor de c: "))
             except:
-                c = 1
+                c = 1.0
             try:
                 op = int(input("Opções:\n1 - Operação em RGB \n2 - Operação em Y\nQualquer outra coisa - retornar\nOpção = "))
             except:
@@ -295,16 +295,16 @@ def brilho_multiplicativo(img_array, rgb = True, c = 1.0):
         return Image.fromarray(dummy_img_array, mode = "RGB") # retorna a imagem transformada
 
 def filtro_moda_mediana(img_array, m, n, mediana = True):
-    if m >= 1 and n >= 1:
+    if m > 1 and n > 1:
         pivo_i = int(m % 2 == 0)
         pivo_j = int(n % 2 == 0)
         limite_i = m//2
         limite_j = n//2
-        dummy_img_array = np.zeros((len(img_array) - (2 * limite_i), len(img_array[0]) - (2 * limite_j), 3), dtype = int)
+        dummy_img_array = np.zeros((len(img_array) - (2 * limite_i) + pivo_i, len(img_array[0]) - (2 * limite_j) + pivo_j, 3), dtype = int)
         x = 0
-        for i in range(limite_i - pivo_i, len(img_array) - limite_i - pivo_i): # s/ extensao
+        for i in range(limite_i - pivo_i, len(img_array) - limite_i): # s/ extensao
             y = 0
-            for j in range(limite_j - pivo_j, len(img_array[0]) - limite_j - pivo_j):
+            for j in range(limite_j - pivo_j, len(img_array[0]) - limite_j):
                 vizinhosR = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 0]
                 vizinhosG = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 1]
                 vizinhosB = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 2]
@@ -335,11 +335,11 @@ def convolucao(img_array, filtro_array):
         pivo_j = int(n % 2 == 0)
         limite_i = m//2
         limite_j = n//2
-        dummy_img_array = np.zeros((len(img_array) - (2 * limite_i), len(img_array[0]) - (2 * limite_j), 3), dtype = int)
+        dummy_img_array = np.zeros((len(img_array) - (2 * limite_i) + pivo_i, len(img_array[0]) - (2 * limite_j) + pivo_j, 3), dtype = int)
         x = 0
-        for i in range(limite_i - pivo_i, len(img_array) - limite_i - pivo_i): # s/ extensao
+        for i in range(limite_i - pivo_i, len(img_array) - limite_i): # s/ extensao
             y = 0
-            for j in range(limite_j - pivo_j, len(img_array[0]) - limite_j - pivo_j):
+            for j in range(limite_j - pivo_j, len(img_array[0]) - limite_j):
                 pixel = [0, 0, 0]
                 xm = 0
                 for k in range(i - limite_i + pivo_i, i + limite_i + 1):
