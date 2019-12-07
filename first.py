@@ -269,7 +269,7 @@ def negativo(banda, img_array):
 
 def brilho_multiplicativo(img_array, rgb = True, c = 1.0):
     if c < 0:
-        return img_array
+        return Image.fromarray(img_array, mode = "RGB") # basicamente retorna a imagem original no caso de c não ser um número não negativo
     else:
         if rgb:
             dummy_img_array = img_array.copy()
@@ -295,7 +295,7 @@ def brilho_multiplicativo(img_array, rgb = True, c = 1.0):
         return Image.fromarray(dummy_img_array, mode = "RGB") # retorna a imagem transformada
 
 def filtro_moda_mediana(img_array, m, n, mediana = True):
-    if m > 1 and n > 1:
+    if m >= 1 and n >= 1:
         pivo_i = int(m % 2 == 0)
         pivo_j = int(n % 2 == 0)
         limite_i = m//2
@@ -309,7 +309,7 @@ def filtro_moda_mediana(img_array, m, n, mediana = True):
                 vizinhosG = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 1]
                 vizinhosB = img_array[i - limite_i + pivo_i : i + limite_i + 1 , j - limite_j + pivo_j : j + limite_j + 1, 2]
                 if mediana:
-                    g = [np.median(vizinhosR), np.median(vizinhosG), np.median(vizinhosB)]
+                    g = [int(round(np.median(vizinhosR))), int(round(np.median(vizinhosG))), int(round(np.median(vizinhosB)))]
                 else:
                     g = [stats.mode(vizinhosR)[0][0][0], stats.mode(vizinhosG)[0][0][0], stats.mode(vizinhosB)[0][0][0]]
                 dummy_img_array[x][y] = g
@@ -317,7 +317,7 @@ def filtro_moda_mediana(img_array, m, n, mediana = True):
             x += 1
         return Image.fromarray(np.uint8(dummy_img_array), mode = "RGB") # retorna a imagem transformada
     else:
-        return img_array
+        return Image.fromarray(img_array, mode = "RGB")
 
 def convolucao(img_array, filtro_array):
     conv1 = []
@@ -362,7 +362,8 @@ def convolucao(img_array, filtro_array):
             x += 1
     
         return Image.fromarray(np.uint8(dummy_img_array), mode = "RGB") # retorna a imagem transformada
-
+    else:
+        return Image.fromarray(img_array, mode = "RGB")
 
 if __name__ == "__main__":
     main()
