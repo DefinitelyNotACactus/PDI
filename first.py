@@ -277,7 +277,7 @@ def brilho_multiplicativo(img_array, rgb = True, c = 1.0):
                 for j in range(len(img_array[0])): # itera pelas colunas
                     pixel = dummy_img_array[i][j].copy()
                     for k in range(3):
-                        banda = pixel[k] * c
+                        banda = int(round(pixel[k] * c))
                         if banda > 255: # verificar limites
                             banda = 255
                         elif banda < 0: # imagino que isso nao ocorre pois c >= 0
