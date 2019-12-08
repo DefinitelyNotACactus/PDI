@@ -35,8 +35,8 @@ def main():
                 print("Convertendo...")
                 dummy_array = conversor(img_array, True)
                 dummy_array = conversor(dummy_array, False)
-                print("Feito!")
-                #manipulacao = False
+                img2 = Image.fromarray(dummy_array, mode = "RGB")
+                manipulacao = True
                 
         elif op == 2: # banda individual
             try:
@@ -295,7 +295,7 @@ def brilho_multiplicativo(img_array, rgb = True, c = 1.0):
         return Image.fromarray(dummy_img_array, mode = "RGB") # retorna a imagem transformada
 
 def filtro_moda_mediana(img_array, m, n, mediana = True):
-    if m >= 1 and n >= 1:
+    if m * n > 1:
         pivo_i = int(m % 2 == 0)
         pivo_j = int(n % 2 == 0)
         limite_i = m//2
@@ -330,7 +330,7 @@ def convolucao(img_array, filtro_array):
     m = len(conv2)
     n = len(conv2[0])
 
-    if m >= 1 and n >= 1:
+    if m * n > 1:
         pivo_i = int(m % 2 == 0)
         pivo_j = int(n % 2 == 0)
         limite_i = m//2
