@@ -6,54 +6,64 @@ import util
 import math
 
 def main():
+    print("Bem vindo ao T2 de PDI 2019.2")
     while(True):
         manipulacao = False
         try:
-            op = int(input("Menu principal\nOpções:\n1 - Rotação (SEM mapeamento reverso)\n2 - Rotação (COM mapeamento reverso)\n0 - Sair\nOpção = "))
+            op = int(input("Menu principal\nOpções:\n1 - Rotação\n2 - DCT\n3 - Aproximação usando coeficientes\n4 - Filtro passa-baixas\n0 - Sair\nOpção = "))
         except:
             break
             
-        if op == 0:
+        if op == 0: # sair
             break
-            
-        if op == 1: # rotacao (s/ mapeamento)
-            img = util.escolherImagem()
-            img_array = np.asarray(img)
-            theta = float(input("Insira o valor de theta: "))
-            ic = int(input("Insira o valor de ic: "))
-            jc = int(input("Insira o valor de jc: "))
-            print("Manipulando...")
-            img2 = rotacaoSimples(img_array, theta, ic, jc)
-            print("Feito!")
-            manipulacao = True
-        elif op == 2: # rotacao (s/ mapeamento)
-            img = util.escolherImagem()
-            img_array = np.asarray(img)
-            theta = float(input("Insira o valor de theta: "))
-            ic = int(input("Insira o valor de ic: "))
-            jc = int(input("Insira o valor de jc: "))
-            print("Manipulando...")
-            img2 = rotacaoReversa(img_array, theta, ic, jc)
-            print("Feito!")
-            manipulacao = True
         
+        if op >= 1 and op <= 4:
+            img = util.escolherImagem()
+            img_array = np.asarray(img)
+            
+        if op == 1: # rotacao
+            try:
+                theta = float(input("Insira o valor de theta: "))
+            except:
+                theta = -1
+                
+            if(theta < 0 or theta > 360):
+                print("Theta precisa estar entre 0 e 360!")
+            else:
+                try:
+                    op2 = int(input("Opções:\n1 - Mapeamento direto\n2 - Mapeamento reverso\nQualquer outra coisa - retornar\nOpção = "))
+                except:
+                    op2 = -1
+                
+                if op2 >= 1:
+                    img2 = rotacaoMapeamentoDireto(img_array, theta) if op == 1 else rotacaoMapeamentoReverso(img_array, theta)
+                    print("Feito!")
+                    manipulacao = True
+                    
+        elif op == 2: #dct
+            img2 = DCT(img_array)
+            manipulacao = True
+            
+        elif op == 3: # aproximacao usando n coeficientes + dc
+            print("TODO!")
+            
+        elif op == 4: # filtro passa-baixas
+            print("TODO!")
+
         if manipulacao:
             util.visualizar_salvar(img2)
 
-    
-def rotacaoSimples(img_array, theta = 0, ic = 0, jc = 0):
-    map = np.zeros((len(img_array), len(img_array[0]), 2), dtype = int)
+# Rotação por mapeamento direto, IC = JC = 0
+def rotacaoMapeamentoDireto(img_array, theta = 0):
+    map = np.zeros((len(img_array), len(img_array[0]), 2), dtype = int) # array contendo as posições mapeadas
     cos_theta = math.cos(math.radians(theta))
     sin_theta = math.sin(math.radians(theta))
     
     upper_bound = left_bound = right_bound = lower_bound = 0
-    if(len(img_array) > 0 and len(img_array[0]) > 0):
-        upper_bound = lower_bound = map[0][0][0] = round(((0 - ic) * cos_theta) - ((0 - jc) * sin_theta) + ic)
-        left_bound = right_bound = map[0][0][1] = round(((0 - ic) * sin_theta) + ((0 - jc) * cos_theta) + jc)
-    for i in range(1, len(img_array)):
-        for j in range(1, len(img_array[0])):
-                map_i = round(((i - ic) * cos_theta) - ((j - jc) * sin_theta) + ic)
-                map_j = round(((i - ic) * sin_theta) + ((j - jc) * cos_theta) + jc)
+    for i in range(0, len(img_array)):
+        for j in range(0, len(img_array[0])):
+                map_i = round((i * cos_theta) - (j * sin_theta))
+                map_j = round((i * sin_theta) + (j  * cos_theta))
                 
                 if map_i < upper_bound:
                     upper_bound = map_i
@@ -69,21 +79,6 @@ def rotacaoSimples(img_array, theta = 0, ic = 0, jc = 0):
                 
     r = abs(lower_bound - upper_bound)
     c = abs(right_bound - left_bound)
-    '''
-    if theta < 90:
-        r = round((len(img_array) * sin_theta) + (len(img_array[0]) * cos_theta))
-        c = round((len(img_array) * cos_theta) + (len(img_array[0]) * sin_theta))
-    elif theta > 90:
-        r_theta = math.radians(theta - 90)
-        ar = len(img_array[0])
-        ac = len(img_array)
-        c = round((ac * math.cos(r_theta)) + (ar * math.sin(r_theta)))
-        r = round((ac * math.sin(r_theta)) + (ar * math.cos(r_theta)))
-    else: # theta = 90
-        r = len(img_array[0])
-        c = len(img_array)
-        
-    '''
     dummy_img_array = np.zeros((r + 1, c + 1, 3), dtype = int)
     for i in range(len(img_array)):
         for j in range(len(img_array[0])):
@@ -91,7 +86,7 @@ def rotacaoSimples(img_array, theta = 0, ic = 0, jc = 0):
     
     return Image.fromarray(np.uint8(dummy_img_array), mode = "RGB") # retorna a imagem transformada
 
-def rotacaoReversa(img_array, theta = 45.0, ic = 0, jc = 0):
+def rotacaoMapeamentoReverso(img_array, theta = 45.0, ic = 0, jc = 0):
     cos_theta = math.cos(math.radians(theta))
     sin_theta = math.sin(math.radians(theta))
 
@@ -142,5 +137,56 @@ def rotacaoReversa(img_array, theta = 45.0, ic = 0, jc = 0):
 
     return Image.fromarray(np.uint8(dummy_img_array), mode = "RGB") # retorna a imagem transformada
 
+# Realiza a DCT da imagem e exibe o módulo da DCT da mesma, sem o nível DC, e o valor do nível DC.
+def DCT(img_array):
+    pi = math.pi
+    c0 = math.sqrt(1/2)
+    r = len(img_array)
+    c = len(img_array[0])
+    dct_array = np.zeros((r, c, 1))
+    
+    #dct linha a linha
+    for row in range(r):
+        for k in range(c):
+            for n in range(c):
+                dct_array[row][k] += img_array[row][n][0] * math.cos((2 * pi * n * (k / (2 * c))) + ((k * pi) / (2 * c)))
+                
+            if k == 0:
+                dct_array[row][k] *= c0
+                
+            dct_array[row][k] *= math.sqrt(2 / c)
+            
+    #dct coluna a coluna
+    for column in range(c):
+        for k in range(r):
+            for n in range(r):
+                dct_array[k][column] += dct_array[n][column] * math.cos((2 * pi * n * (k / (2 * r))) + ((k * pi) / (2 * r)))
+                
+            if k == 0:
+                dct_array[k][column] *= c0
+                
+            dct_array[k][column] *= math.sqrt(2 / c)
+
+    # TODO: Ajeitar escalonamento
+    dummy_img_array = dct_array.copy()
+    dc = dct_array[0][0]
+    dummy_img_array[0][0] = 0 # tirar o dc da dct
+    max = 0
+    for i in range(r):
+        for j in range(c):
+            dummy_img_array[i][j] = abs(dummy_img_array[i][j])
+            if dummy_img_array[i][j] > max:
+                max = dummy_img_array[i][j]
+                print("New max", max)
+                
+    for i in range(r):
+        for j in range(c):
+            dummy_img_array[i][j] = np.round(dummy_img_array[i][j] / max)
+            dummy_img_array[i][j] = np.round(dummy_img_array[i][j])
+            if dummy_img_array[i][j] > 255 or dummy_img_array[i][j] < 0:
+                print(dummy_img_array[i][j] * max)
+                
+    return Image.fromarray(np.uint8(dummy_img_array)) # retorna a imagem transformada
+                
 if __name__ == "__main__":
     main()
