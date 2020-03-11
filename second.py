@@ -1,5 +1,4 @@
 from PIL import Image
-from scipy import stats
 import numpy as np
 import seaborn as sns
 import sys
@@ -46,7 +45,7 @@ def main():
                     
         elif op == 2: #dct
             start = time.time()
-            dc, img2 = moduloDCT(img_array[:, :, 0]) # imagem monocromatica
+            dc, img2 = moduloDCT(img_array[ : , : , 0]) # imagem monocromatica
             end = time.time()
             print("Concluído! (Operação realizada em %.2f segundos)" % (end - start))
             print("Nível DC:", dc)
@@ -56,8 +55,12 @@ def main():
             print("TODO!")
             
         elif op == 4: # filtro passa-baixas
-            print("TODO!")
-
+            start = time.time()
+            img2 = passaBaixas(img_array[ : , : , 0]) # imagem monocromatica
+            end = time.time()
+            print("Concluído! (Operação realizada em %.2f segundos)" % (end - start))
+            manipulacao = True
+            
         if manipulacao:
             util.visualizar_salvar(img2)
 
@@ -152,14 +155,14 @@ def DCT1D(x):
     
     # variaveis auxiliares de aceleracao
     c0 = math.sqrt(0.5) # valor de ck para k = 0
-    coef2 = math.sqrt(2/N) # valor do outro coeficiente externo ao somatorio
+    coef2 = math.sqrt(2 / N) # valor do outro coeficiente externo ao somatorio
     pi = math.pi # valor de pi
     
     for k in range(N):
         sum = 0 # variavel do resultado do somatorio
         # termos do cosseno
         term1 = (pi * k) / N # primeiro termo, a ser multiplicado por n
-        term2 = (k * pi) / (N << 1) # segundo termo do valor do cosseno, constante dentro do somatorio, (N << 1) equivale a (N / 2)
+        term2 = (k * pi) / (N << 1) # segundo termo do valor do cosseno, constante dentro do somatorio, (N << 1) equivale a (N * 2)
         for n in range(N): # laco do somatorio
             sum += x[n] * math.cos(term1 * n + term2)
         
@@ -170,7 +173,34 @@ def DCT1D(x):
         X[k] = sum # atribuir a X[k] resultado do somatorio
         
     return X
-
+    
+# Função que realiza a DCT inversa sobre um vetor de 1 dimensão
+def IDCT1D(X):
+    N = len(X) # tamanho do vetor
+    x = np.zeros(N)
+    
+    # variaveis auxiliares
+    c0 = math.sqrt(0.5) # valor de ck para k = 0
+    coef2 = math.sqrt(2 / N) # valor do outro coeficiente externo ao somatorio
+    pi = math.pi # valor de pi
+    
+    for n in range(N):
+        sum = 0
+        # termos do cosseno
+        term1 = (pi * n) / N
+        term2 = pi / (N << 1)
+        for k in range(N):
+            if X[k] != 0: # economia de operacoes
+                if k == 0:
+                    sum += (c0 * X[k] * math.cos(term1 * k + term2 * k))
+                else:
+                    sum += X[k] * math.cos(term1 * k + term2 * k)
+                    
+        sum *= coef2
+        x[k] = sum
+        
+    return x
+    
 # Função que realiza a DCT sobre uma imagem (na realidade poderia ser um vetor de duas dimensões qualquer)
 def DCTImagem(img_array):
     dct_img_array = np.zeros((len(img_array), len(img_array[0])))
@@ -186,6 +216,22 @@ def DCTImagem(img_array):
     dct_img_array = dct_img_array.T # retornar ao formato R x C original
     
     return dct_img_array # retornar a matriz transformada
+
+# Função que realiza a DCT reversa sobre um vetor de duas dimensões qualquer
+def IDCTImagem(dct_array):
+    img_array = np.zeros((len(dct_array), len(dct_array[0])))
+    
+    # Aplicar DCT linha a linha
+    for i, row in enumerate(dct_array):
+        img_array[i] = IDCT1D(row)
+    
+    img_array = img_array.T # fazer a matriz transposta da imagem, assim permitindo que as colunas virem linhas e possam ser usadas em IDCT1D
+    for j, column in enumerate(img_array):
+        img_array[j] = IDCT1D(column)
+        
+    img_array = img_array.T # retornar ao formato R x C original
+    
+    return img_array
                 
 # Função para exibir o módulo da DCT de I, sem o nível DC, e o valor do nível DC
 def moduloDCT(img_array):
@@ -204,6 +250,30 @@ def moduloDCT(img_array):
     heatMap = sns.heatmap(abs(dummy_img_array))
     
     return dc, heatMap.get_figure()
+
+# Função para encontrar e exibir uma aproximação de I obtida preservando o coeficiente DC e os n coeficientes AC mais importantes de I, e zerando os demais.
+# O parâmetro n é um inteiro no intervalo [0, RxC-1].
+def aproximacaoImagem(img_array, n = 0):
+    if(n >= (len(img_array) * len(img_array[0]))):
+        return None # n fora do intervalo permitido!
+    
+    dummy_img_array = DCTImagem(img_array)
+    # TODO
+
+# Função para encontrar a imagem resultante da filtragem de I por um filtro passa-baixas ideal quadrado,
+# com frequência de corte fc (parâmetro especificado pelo usuário) igual à aresta do quadrado, em pixels.
+def passaBaixas(img_array, fc = 4):
+    if fc >= len(img_array) or fc >= len(img_array[0]):
+        return None # fc maior que o tamanho da imagem em R e/ou C
+        
+    dct_array = DCTImagem(img_array) # converter a imagem pro dominio da frequencia
+    # Realizar o corte
+    dct_array[ : , fc : ] = 0 # zerar tudo em cada coluna que esteja de fc a c - 1
+    dct_array[fc : , : ] = 0 # zerar tudo em cada linha que esteja de fc a r - 1
+    
+    dummy_img_array = IDCTImagem(dct_array) # voltar pro dominio do espaco
+    
+    return Image.fromarray(np.uint8(dummy_img_array))
     
 if __name__ == "__main__":
     main()
