@@ -2,7 +2,8 @@ from PIL import Image
 import numpy as np
 import seaborn as sns
 import sys
-import util
+import util # leitura e escrita de imagens
+import dct # implementacao da dct
 import math
 import time
 
@@ -37,6 +38,7 @@ def main():
                     op2 = -1
                 
                 if op2 >= 1:
+                    print("Trabalhando...")
                     start = time.time()
                     img2 = rotacaoMapeamentoDireto(img_array, theta) if op == 1 else rotacaoMapeamentoReverso(img_array, theta)
                     end = time.time()
@@ -44,6 +46,7 @@ def main():
                     manipulacao = True
                     
         elif op == 2: #dct
+            print("Trabalhando...")
             start = time.time()
             dc, img2 = moduloDCT(img_array[ : , : , 0]) # imagem monocromatica
             end = time.time()
@@ -55,12 +58,17 @@ def main():
             print("TODO!")
             
         elif op == 4: # filtro passa-baixas
-            start = time.time()
-            img2 = passaBaixas(img_array[ : , : , 0]) # imagem monocromatica
-            end = time.time()
-            print("Concluído! (Operação realizada em %.2f segundos)" % (end - start))
-            manipulacao = True
-            
+            try:
+                fc = int(input("Insira o valor da frequência de corte (fc):\nfc = "))
+                print("Trabalhando")
+                start = time.time()
+                img2 = passaBaixas(img_array[ : , : , 0], fc = fc) # imagem monocromatica
+                end = time.time()
+                print("Concluído! (Operação realizada em %.2f segundos)" % (end - start))
+                manipulacao = True
+            except:
+                print("Insira um valor válido para fc!")
+                
         if manipulacao:
             util.visualizar_salvar(img2)
 
@@ -148,94 +156,9 @@ def rotacaoMapeamentoReverso(img_array, theta = 45.0, ic = 0, jc = 0):
 
     return Image.fromarray(np.uint8(dummy_img_array), mode = "RGB") # retorna a imagem transformada
 
-# Função que realiza a DCT sobre um vetor de 1 dimensão
-def DCT1D(x):
-    N = len(x) # tamanho do vetor
-    X = np.zeros(N) # criar um vetor de tamanho N
-    
-    # variaveis auxiliares de aceleracao
-    c0 = math.sqrt(0.5) # valor de ck para k = 0
-    coef2 = math.sqrt(2 / N) # valor do outro coeficiente externo ao somatorio
-    pi = math.pi # valor de pi
-    
-    for k in range(N):
-        sum = 0 # variavel do resultado do somatorio
-        # termos do cosseno
-        term1 = (pi * k) / N # primeiro termo, a ser multiplicado por n
-        term2 = (k * pi) / (N << 1) # segundo termo do valor do cosseno, constante dentro do somatorio, (N << 1) equivale a (N * 2)
-        for n in range(N): # laco do somatorio
-            sum += x[n] * math.cos(term1 * n + term2)
-        
-        if k == 0: # multiplicar por c0 caso k seja 0, caso contrario, fazer nada uma vez que ck = 1 p/ k != 0
-            sum *= c0
-        
-        sum *= coef2 # multiplicar pelo outro coeficiente
-        X[k] = sum # atribuir a X[k] resultado do somatorio
-        
-    return X
-    
-# Função que realiza a DCT inversa sobre um vetor de 1 dimensão
-def IDCT1D(X):
-    N = len(X) # tamanho do vetor
-    x = np.zeros(N)
-    
-    # variaveis auxiliares
-    c0 = math.sqrt(0.5) # valor de ck para k = 0
-    coef2 = math.sqrt(2 / N) # valor do outro coeficiente externo ao somatorio
-    pi = math.pi # valor de pi
-    
-    for n in range(N):
-        sum = 0
-        # termos do cosseno
-        term1 = (pi * n) / N
-        term2 = pi / (N << 1)
-        for k in range(N):
-            if X[k] != 0: # economia de operacoes
-                if k == 0:
-                    sum += (c0 * X[k] * math.cos(term1 * k + term2 * k))
-                else:
-                    sum += X[k] * math.cos(term1 * k + term2 * k)
-                    
-        sum *= coef2
-        x[k] = sum
-        
-    return x
-    
-# Função que realiza a DCT sobre uma imagem (na realidade poderia ser um vetor de duas dimensões qualquer)
-def DCTImagem(img_array):
-    dct_img_array = np.zeros((len(img_array), len(img_array[0])))
-    
-    # Aplicar DCT linha a linha
-    for i, row in enumerate(img_array):
-        dct_img_array[i] = DCT1D(row)
-    
-    dct_img_array = dct_img_array.T # fazer a matriz transposta da imagem, assim permitindo que as colunas virem linhas e possam ser usadas em DCT1D
-    for j, column in enumerate(dct_img_array):
-        dct_img_array[j] = DCT1D(column)
-        
-    dct_img_array = dct_img_array.T # retornar ao formato R x C original
-    
-    return dct_img_array # retornar a matriz transformada
-
-# Função que realiza a DCT reversa sobre um vetor de duas dimensões qualquer
-def IDCTImagem(dct_array):
-    img_array = np.zeros((len(dct_array), len(dct_array[0])))
-    
-    # Aplicar DCT linha a linha
-    for i, row in enumerate(dct_array):
-        img_array[i] = IDCT1D(row)
-    
-    img_array = img_array.T # fazer a matriz transposta da imagem, assim permitindo que as colunas virem linhas e possam ser usadas em IDCT1D
-    for j, column in enumerate(img_array):
-        img_array[j] = IDCT1D(column)
-        
-    img_array = img_array.T # retornar ao formato R x C original
-    
-    return img_array
-                
 # Função para exibir o módulo da DCT de I, sem o nível DC, e o valor do nível DC
 def moduloDCT(img_array):
-    dummy_img_array = DCTImagem(img_array)
+    dummy_img_array = dct.DCT2D(img_array)
     
     dc = dummy_img_array[0][0]
     dummy_img_array[0][0] = 0
@@ -257,7 +180,7 @@ def aproximacaoImagem(img_array, n = 0):
     if(n >= (len(img_array) * len(img_array[0]))):
         return None # n fora do intervalo permitido!
     
-    dummy_img_array = DCTImagem(img_array)
+    dummy_img_array = dct.DCT2D(img_array)
     # TODO
 
 # Função para encontrar a imagem resultante da filtragem de I por um filtro passa-baixas ideal quadrado,
@@ -265,14 +188,24 @@ def aproximacaoImagem(img_array, n = 0):
 def passaBaixas(img_array, fc = 4):
     if fc >= len(img_array) or fc >= len(img_array[0]):
         return None # fc maior que o tamanho da imagem em R e/ou C
-        
-    dct_array = DCTImagem(img_array) # converter a imagem pro dominio da frequencia
+
+    dct_array = dct.DCT2D(img_array) # converter a imagem pro dominio da frequencia
     # Realizar o corte
     dct_array[ : , fc : ] = 0 # zerar tudo em cada coluna que esteja de fc a c - 1
     dct_array[fc : , : ] = 0 # zerar tudo em cada linha que esteja de fc a r - 1
     
-    dummy_img_array = IDCTImagem(dct_array) # voltar pro dominio do espaco
+    dummy_img_array = dct.DCT2D(dct_array, inverse = True) # voltar pro dominio do espaco
     
+    dummy_img_array = np.round(dummy_img_array)
+    
+    # garantir que os valores fiquem nos limites
+    for i in range(len(dummy_img_array)):
+        for j in range(len(dummy_img_array[0])):
+            if dummy_img_array[i][j] < 0:
+                dummy_img_array[i][j] = 0
+            elif dummy_img_array[i][j] > 255:
+                dummy_img_array[i][j] = 255
+                
     return Image.fromarray(np.uint8(dummy_img_array))
     
 if __name__ == "__main__":
