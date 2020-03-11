@@ -55,12 +55,21 @@ def main():
             manipulacao = True
             
         elif op == 3: # aproximacao usando n coeficientes + dc
-            print("TODO!")
+            #try:
+            n = int(input("Insira o número de coeficientes mais importantes que se deseja utilizar (n):\nn = "))
+            print("Trabalhando...")
+            start = time.time()
+            img2 = aproximacaoImagem(img_array[ : , : , 0], n = n) # imagem monocromatica
+            end = time.time()
+            print("Concluído! (Operação realizada em %.2f segundos)" % (end - start))
+            manipulacao = True
+            #except:
+                #print("Insira um valor válido para n!")
             
         elif op == 4: # filtro passa-baixas
             try:
                 fc = int(input("Insira o valor da frequência de corte (fc):\nfc = "))
-                print("Trabalhando")
+                print("Trabalhando...")
                 start = time.time()
                 img2 = passaBaixas(img_array[ : , : , 0], fc = fc) # imagem monocromatica
                 end = time.time()
@@ -180,8 +189,37 @@ def aproximacaoImagem(img_array, n = 0):
     if(n >= (len(img_array) * len(img_array[0]))):
         return None # n fora do intervalo permitido!
     
-    dummy_img_array = dct.DCT2D(img_array)
-    # TODO
+    dct_array = dct.DCT2D(img_array)
+    list_coeff = []
+    dc = dct_array[0][0] # obtem dc
+    if n > 0: # mais de um coeficiente a ser mantido
+        for i in range(len(dct_array)):
+            for j in range(len(dct_array[0])):
+                if(i != 0 and j != 0): # Nao adicionar dc a lista de coeficientes
+                    list_coeff.append({"abs(Value)": abs(dct_array[i][j]), "Value": dct_array[i][j], "i": i, "j": j})
+        # Ordenar a lista de coeficientes pelo valor absoluto e pegar os n maiores coeficientes
+        list_coeff_sorted = sorted(list_coeff, key = lambda x : x['abs(Value)'])
+        top_coeffs = list_coeff_sorted[-n : ]
+        dct_array.fill(0) # zerar o array
+        for coeff in top_coeffs: # recolocar os maiores coeficientes no array
+            dct_array[coeff['i']][coeff['j']] = coeff['Value']
+    else: # manter apenas DC, zerar o resto
+        dct_array.fill(0) # zerar o array
+        
+    dct_array[0][0] = dc
+        
+    dummy_img_array = dct.DCT2D(dct_array, inverse = True) # voltar pro dominio do espaco
+    
+    # garantir que os limites sejam preservados
+    for i in range(len(dummy_img_array)):
+        for j in range(len(dummy_img_array[0])):
+            dummy_img_array[i][j] = round(dummy_img_array[i][j])
+            if dummy_img_array[i][j] < 0:
+                dummy_img_array[i][j] = 0
+            elif dummy_img_array[i][j] > 255:
+                dummy_img_array[i][j] = 255
+                
+    return Image.fromarray(np.uint8(dummy_img_array))
 
 # Função para encontrar a imagem resultante da filtragem de I por um filtro passa-baixas ideal quadrado,
 # com frequência de corte fc (parâmetro especificado pelo usuário) igual à aresta do quadrado, em pixels.
@@ -195,12 +233,11 @@ def passaBaixas(img_array, fc = 4):
     dct_array[fc : , : ] = 0 # zerar tudo em cada linha que esteja de fc a r - 1
     
     dummy_img_array = dct.DCT2D(dct_array, inverse = True) # voltar pro dominio do espaco
-    
-    dummy_img_array = np.round(dummy_img_array)
-    
+        
     # garantir que os valores fiquem nos limites
     for i in range(len(dummy_img_array)):
         for j in range(len(dummy_img_array[0])):
+            dummy_img_array[i][j] = round(dummy_img_array[i][j])
             if dummy_img_array[i][j] < 0:
                 dummy_img_array[i][j] = 0
             elif dummy_img_array[i][j] > 255:
