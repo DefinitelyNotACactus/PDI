@@ -1,9 +1,11 @@
 from PIL import Image
 from scipy import stats
 import numpy as np
+import seaborn as sns
 import sys
 import util
 import math
+import time
 
 def main():
     print("Bem vindo ao T2 de PDI 2019.2")
@@ -36,12 +38,18 @@ def main():
                     op2 = -1
                 
                 if op2 >= 1:
+                    start = time.time()
                     img2 = rotacaoMapeamentoDireto(img_array, theta) if op == 1 else rotacaoMapeamentoReverso(img_array, theta)
-                    print("Feito!")
+                    end = time.time()
+                    print("Concluído! (Operação realizada em %.2f segundos)" % (end - start))
                     manipulacao = True
                     
         elif op == 2: #dct
-            img2 = DCT(img_array)
+            start = time.time()
+            dc, img2 = moduloDCT(img_array[:, :, 0]) # imagem monocromatica
+            end = time.time()
+            print("Concluído! (Operação realizada em %.2f segundos)" % (end - start))
+            print("Nível DC:", dc)
             manipulacao = True
             
         elif op == 3: # aproximacao usando n coeficientes + dc
@@ -137,56 +145,65 @@ def rotacaoMapeamentoReverso(img_array, theta = 45.0, ic = 0, jc = 0):
 
     return Image.fromarray(np.uint8(dummy_img_array), mode = "RGB") # retorna a imagem transformada
 
-# Realiza a DCT da imagem e exibe o módulo da DCT da mesma, sem o nível DC, e o valor do nível DC.
-def DCT(img_array):
-    pi = math.pi
-    c0 = math.sqrt(1/2)
-    r = len(img_array)
-    c = len(img_array[0])
-    dct_array = np.zeros((r, c, 1))
+# Função que realiza a DCT sobre um vetor de 1 dimensão
+def DCT1D(x):
+    N = len(x) # tamanho do vetor
+    X = np.zeros(N) # criar um vetor de tamanho N
     
-    #dct linha a linha
-    for row in range(r):
-        for k in range(c):
-            for n in range(c):
-                dct_array[row][k] += img_array[row][n][0] * math.cos((2 * pi * n * (k / (2 * c))) + ((k * pi) / (2 * c)))
-                
-            if k == 0:
-                dct_array[row][k] *= c0
-                
-            dct_array[row][k] *= math.sqrt(2 / c)
-            
-    #dct coluna a coluna
-    for column in range(c):
-        for k in range(r):
-            for n in range(r):
-                dct_array[k][column] += dct_array[n][column] * math.cos((2 * pi * n * (k / (2 * r))) + ((k * pi) / (2 * r)))
-                
-            if k == 0:
-                dct_array[k][column] *= c0
-                
-            dct_array[k][column] *= math.sqrt(2 / c)
+    # variaveis auxiliares de aceleracao
+    c0 = math.sqrt(0.5) # valor de ck para k = 0
+    coef2 = math.sqrt(2/N) # valor do outro coeficiente externo ao somatorio
+    pi = math.pi # valor de pi
+    
+    for k in range(N):
+        sum = 0 # variavel do resultado do somatorio
+        # termos do cosseno
+        term1 = (pi * k) / N # primeiro termo, a ser multiplicado por n
+        term2 = (k * pi) / (N << 1) # segundo termo do valor do cosseno, constante dentro do somatorio, (N << 1) equivale a (N / 2)
+        for n in range(N): # laco do somatorio
+            sum += x[n] * math.cos(term1 * n + term2)
+        
+        if k == 0: # multiplicar por c0 caso k seja 0, caso contrario, fazer nada uma vez que ck = 1 p/ k != 0
+            sum *= c0
+        
+        sum *= coef2 # multiplicar pelo outro coeficiente
+        X[k] = sum # atribuir a X[k] resultado do somatorio
+        
+    return X
 
-    # TODO: Ajeitar escalonamento
-    dummy_img_array = dct_array.copy()
-    dc = dct_array[0][0]
-    dummy_img_array[0][0] = 0 # tirar o dc da dct
-    max = 0
-    for i in range(r):
-        for j in range(c):
-            dummy_img_array[i][j] = abs(dummy_img_array[i][j])
-            if dummy_img_array[i][j] > max:
-                max = dummy_img_array[i][j]
-                print("New max", max)
+# Função que realiza a DCT sobre uma imagem (na realidade poderia ser um vetor de duas dimensões qualquer)
+def DCTImagem(img_array):
+    dct_img_array = np.zeros((len(img_array), len(img_array[0])))
+    
+    # Aplicar DCT linha a linha
+    for i, row in enumerate(img_array):
+        dct_img_array[i] = DCT1D(row)
+    
+    dct_img_array = dct_img_array.T # fazer a matriz transposta da imagem, assim permitindo que as colunas virem linhas e possam ser usadas em DCT1D
+    for j, column in enumerate(dct_img_array):
+        dct_img_array[j] = DCT1D(column)
+        
+    dct_img_array = dct_img_array.T # retornar ao formato R x C original
+    
+    return dct_img_array # retornar a matriz transformada
                 
-    for i in range(r):
-        for j in range(c):
-            dummy_img_array[i][j] = np.round(dummy_img_array[i][j] / max)
-            dummy_img_array[i][j] = np.round(dummy_img_array[i][j])
-            if dummy_img_array[i][j] > 255 or dummy_img_array[i][j] < 0:
-                print(dummy_img_array[i][j] * max)
-                
-    return Image.fromarray(np.uint8(dummy_img_array)) # retorna a imagem transformada
-                
+# Função para exibir o módulo da DCT de I, sem o nível DC, e o valor do nível DC
+def moduloDCT(img_array):
+    dummy_img_array = DCTImagem(img_array)
+    
+    dc = dummy_img_array[0][0]
+    dummy_img_array[0][0] = 0
+
+    '''
+    # Normalizar a matriz para poder ser exibida
+    dummy_img_array /= dummy_img_array.max() # todos os elementos estao entre 0 e 1
+    dummy_img_array *= 255 # todos os elementos estao entre 0 e 255
+    
+    dummy_img_array = np.round(dummy_img_array)
+    '''
+    heatMap = sns.heatmap(abs(dummy_img_array))
+    
+    return dc, heatMap.get_figure()
+    
 if __name__ == "__main__":
     main()
