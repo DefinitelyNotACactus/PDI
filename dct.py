@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import multiprocessing as mp
 
 # Função que realiza a DCT sobre um vetor de 1 dimensão
 def DCT1D(x):
@@ -56,23 +57,25 @@ def IDCT1D(X):
     
 # Função que realiza a DCT (ou a inversa) sobre uma imagem (na realidade poderia ser um vetor de duas dimensões qualquer)
 def DCT2D(img_array, inverse = False):
-    dct_img_array = np.zeros((len(img_array), len(img_array[0])))
+    # Pool de threads, paralelizar a exeução utilizando o número de cpus da máquina
+    pool = mp.Pool(mp.cpu_count())
     
     # Aplicar DCT linha a linha
-    for i, row in enumerate(img_array):
-        if inverse is False:
-            dct_img_array[i] = DCT1D(row)
-        else: # DCT Inversa
-            dct_img_array[i] = IDCT1D(row)
+    if inverse is False:
+        dct_img_array = pool.map(DCT1D, img_array)
+    else: # DCT Inversa
+        dct_img_array = pool.map(IDCT1D, img_array)
             
-    dct_img_array = dct_img_array.T # fazer a matriz transposta da imagem, assim permitindo que as colunas virem linhas e possam ser usadas em DCT1D
+    # fazer a matriz transposta da imagem, assim permitindo que as colunas virem linhas e possam ser usadas em DCT1D
+    dct_img_array = np.array(dct_img_array).T.tolist()
     
-    for j, column in enumerate(dct_img_array):
-        if inverse is False:
-            dct_img_array[j] = DCT1D(column)
-        else: # DCT Inversa
-            dct_img_array[j] = IDCT1D(column)
+    # Aplicar DCT coluna a coluna
+    if inverse is False:
+        dct_img_array = pool.map(DCT1D, dct_img_array)
+    else: # DCT Inversa
+        dct_img_array = pool.map(IDCT1D, dct_img_array)
         
-    dct_img_array = dct_img_array.T # retornar ao formato R x C original
+    #dct_img_array = dct_img_array.T # retornar ao formato R x C original
+    dct_img_array = np.array(dct_img_array).T
     
     return dct_img_array # retornar a matriz transformada
