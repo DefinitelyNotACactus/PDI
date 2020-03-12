@@ -75,7 +75,7 @@ def DCT2D(img_array, inverse = False):
     else: # DCT Inversa
         dct_img_array = pool.map(IDCT1D, dct_img_array)
         
-    #dct_img_array = dct_img_array.T # retornar ao formato R x C original
+    # retornar ao formato R x C original
     dct_img_array = np.array(dct_img_array).T
     
     return dct_img_array # retornar a matriz transformada

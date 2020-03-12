@@ -20,7 +20,7 @@ def main():
             break
         
         if op >= 1 and op <= 4:
-            img = util.escolherImagem()
+            img = util.escolherImagem().convert('L') # Converter pra monocromatico, caso não seja
             img_array = np.asarray(img)
             
         if op == 1: # rotacao
@@ -37,18 +37,18 @@ def main():
                 except:
                     op2 = -1
                 
-                if op2 >= 1:
+                if op2 == 1 or op2 == 2:
                     print("Trabalhando...")
                     start = time.time()
-                    img2 = rotacaoMapeamentoDireto(img_array, theta) if op == 1 else rotacaoMapeamentoReverso(img_array, theta)
+                    img2 = (rotacaoMapeamentoDireto(img_array, theta) if op2 == 1 else rotacaoMapeamentoReverso(img_array, theta))
                     end = time.time()
                     print("Concluído! (Operação realizada em %.2f segundos)" % (end - start))
                     manipulacao = True
-                    
+
         elif op == 2: #dct
             print("Trabalhando...")
             start = time.time()
-            dc, img2 = moduloDCT(img_array[ : , : , 0]) # imagem monocromatica
+            dc, img2 = moduloDCT(img_array) # imagem monocromatica
             end = time.time()
             print("Concluído! (Operação realizada em %.2f segundos)" % (end - start))
             print("Nível DC:", dc)
@@ -59,7 +59,7 @@ def main():
             n = int(input("Insira o número de coeficientes mais importantes que se deseja utilizar (n):\nn = "))
             print("Trabalhando...")
             start = time.time()
-            img2 = aproximacaoImagem(img_array[ : , : , 0], n = n) # imagem monocromatica
+            img2 = aproximacaoImagem(img_array, n = n) # imagem monocromatica
             end = time.time()
             print("Concluído! (Operação realizada em %.2f segundos)" % (end - start))
             manipulacao = True
@@ -71,7 +71,7 @@ def main():
                 fc = int(input("Insira o valor da frequência de corte (fc):\nfc = "))
                 print("Trabalhando...")
                 start = time.time()
-                img2 = passaBaixas(img_array[ : , : , 0], fc = fc) # imagem monocromatica
+                img2 = passaBaixas(img_array, fc = fc) # imagem monocromatica
                 end = time.time()
                 print("Concluído! (Operação realizada em %.2f segundos)" % (end - start))
                 manipulacao = True
@@ -172,13 +172,7 @@ def moduloDCT(img_array):
     dc = dummy_img_array[0][0]
     dummy_img_array[0][0] = 0
 
-    '''
-    # Normalizar a matriz para poder ser exibida
-    dummy_img_array /= dummy_img_array.max() # todos os elementos estao entre 0 e 1
-    dummy_img_array *= 255 # todos os elementos estao entre 0 e 255
-    
-    dummy_img_array = np.round(dummy_img_array)
-    '''
+    # Exibir o modulo da dct como mapa de calor
     heatMap = sns.heatmap(abs(dummy_img_array))
     
     return dc, heatMap.get_figure()
