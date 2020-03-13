@@ -167,20 +167,20 @@ def rotacaoMapeamentoReverso(img_array, theta = 45.0, ic = 0, jc = 0):
 
 # Função para exibir o módulo da DCT de I, sem o nível DC, e o valor do nível DC
 def moduloDCT(img_array):
-    dummy_img_array = dct.DCT2D(img_array)
+    dct_array = dct.DCT2D(img_array)
     
-    dc = dummy_img_array[0][0]
-    dummy_img_array[0][0] = 0
+    dc = dct_array[0][0]
+    dct_array[0][0] = 0
 
     # Exibir o modulo da dct como mapa de calor
-    heatMap = sns.heatmap(abs(dummy_img_array))
+    heatMap = sns.heatmap(abs(dct_array))
     
     return dc, heatMap.get_figure()
 
 # Função para encontrar e exibir uma aproximação de I obtida preservando o coeficiente DC e os n coeficientes AC mais importantes de I, e zerando os demais.
 # O parâmetro n é um inteiro no intervalo [0, RxC-1].
 def aproximacaoImagem(img_array, n = 0):
-    if(n >= (len(img_array) * len(img_array[0]))):
+    if(n >= (len(img_array) * len(img_array[0])) or n < 0):
         return None # n fora do intervalo permitido!
     
     dct_array = dct.DCT2D(img_array)
@@ -218,13 +218,15 @@ def aproximacaoImagem(img_array, n = 0):
 # Função para encontrar a imagem resultante da filtragem de I por um filtro passa-baixas ideal quadrado,
 # com frequência de corte fc (parâmetro especificado pelo usuário) igual à aresta do quadrado, em pixels.
 def passaBaixas(img_array, fc = 4):
-    if fc >= len(img_array) or fc >= len(img_array[0]):
-        return None # fc maior que o tamanho da imagem em R e/ou C
+    if fc > len(img_array) and fc > len(img_array[0]):
+        return None # fc maior que o tamanho da imagem em R e C
 
     dct_array = dct.DCT2D(img_array) # converter a imagem pro dominio da frequencia
     # Realizar o corte
-    dct_array[ : , fc : ] = 0 # zerar tudo em cada coluna que esteja de fc a c - 1
-    dct_array[fc : , : ] = 0 # zerar tudo em cada linha que esteja de fc a r - 1
+    if fc < len(img_array[0]):
+        dct_array[ : , fc + 1 : ] = 0 # zerar tudo em cada coluna que esteja de fc + 1 a c - 1
+    if fc < len(img_array):
+        dct_array[fc + 1 : , : ] = 0 # zerar tudo em cada linha que esteja de fc + 1 a r - 1
     
     dummy_img_array = dct.DCT2D(dct_array, inverse = True) # voltar pro dominio do espaco
         
