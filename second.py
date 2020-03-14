@@ -107,6 +107,8 @@ def rotacaoMapeamentoDireto(img_array, theta = 0):
                 
     r = abs(lower_bound - upper_bound)
     c = abs(right_bound - left_bound)
+    print("r: " + str(r) + " c: " + str(c))
+
     dummy_img_array = np.zeros((r + 1, c + 1, 3), dtype = int)
     for i in range(len(img_array)):
         for j in range(len(img_array[0])):
@@ -114,56 +116,110 @@ def rotacaoMapeamentoDireto(img_array, theta = 0):
     
     return Image.fromarray(np.uint8(dummy_img_array), mode = "RGB") # retorna a imagem transformada
 
-def rotacaoMapeamentoReverso(img_array, theta = 45.0, ic = 0, jc = 0):
+def rotacaoMapeamentoReverso(img_array, theta = 0):
     cos_theta = math.cos(math.radians(theta))
     sin_theta = math.sin(math.radians(theta))
-
-    c = 0
-    r = 0
-    if theta < 90:
-        r = round((len(img_array) * sin_theta) + (len(img_array[0]) * cos_theta))
-        c = round((len(img_array) * cos_theta) + (len(img_array[0]) * sin_theta))
-    elif theta > 90:
-        r_theta = math.radians(theta - 90)
-        ar = len(img_array[0])
-        ac = len(img_array)
-        c = round((ac * math.cos(r_theta)) + (ar * math.sin(r_theta)))
-        r = round((ac * math.sin(r_theta)) + (ar * math.cos(r_theta)))
-    else: # theta = 90
-        r = len(img_array[0])
-        c = len(img_array)
-
-    print("r: " + str(r) + "c: " + str(c)) 
+    
+    upper_bound = left_bound = right_bound = lower_bound = 0
+    for i in range(0, len(img_array)):
+        for j in range(0, len(img_array[0])):
+                map_i = round((i * cos_theta) - (j * sin_theta))
+                map_j = round((i * sin_theta) + (j  * cos_theta))
+                
+                if map_i < upper_bound:
+                    upper_bound = map_i
+                elif map_i > lower_bound:
+                    lower_bound = map_i
+                if map_j < left_bound:
+                    left_bound = map_j
+                elif map_j > right_bound:
+                    right_bound = map_j
+                
+    r = abs(lower_bound - upper_bound)
+    c = abs(right_bound - left_bound)
+    print("r: " + str(r) + " c: " + str(c))
 
     dummy_img_array = np.zeros((r + 1, c + 1, 3), dtype = int)
     for ir in range(1, r + 1):
-      for jr in range(1, c + 1):
-        x = (ir - ic) * cos_theta + (jr - jc) * sin_theta + ic
-        y = -(ir - ic) * sin_theta + (jr - jc) * cos_theta + jc
+        for jr in range(1, c + 1):
+            x = (ir - len(img_array)/2) * cos_theta + (jr - len(img_array[0])/2) * sin_theta + len(img_array)/2
+            y = -(ir - len(img_array)/2) * sin_theta + (jr - len(img_array[0])/2) * cos_theta + len(img_array[0])/2
 
-        print("x: " + str(x) + "y: " + str(y))        
+            if (x >= 0 and x < len(img_array)-1 and y >= 0 and y < len(img_array[0])-1):
+                lower_i = int(x // 1)
+                upper_i = int((x // 1) + 1)
+                lower_j = int(y // 1)
+                upper_j = int((y // 1) + 1)
 
-        if (x > 0 and x < len(img_array) and y > 0 and y < len(img_array[0])):
-          lower_i = int(x // 1)
-          upper_i = int((x // 1) + 1)
-          lower_j = int(y // 1)
-          upper_j = int((y // 1) + 1)
+                f_iy = float(img_array[lower_i][lower_j]) + float((y - lower_j)) * float((img_array[lower_i][upper_j] - img_array[lower_i][lower_j]))
+                f_i1y = float(img_array[upper_i][lower_j]) + float((y - lower_j)) * float((img_array[upper_i][upper_j] - img_array[upper_i][lower_j]))
+                f_xy = f_iy + float((x - lower_i)) * float((f_i1y - f_iy))
 
-          f_iy = img_array[lower_i][lower_j] + (y - lower_j) * (img_array[lower_i][upper_j] - img_array[lower_i][lower_j])
-          f_i1y = img_array[upper_i][lower_j] + (y - lower_j) * (img_array[upper_i][upper_j] - img_array[upper_i][lower_j])
-          f_xy = f_iy + (x - lower_i) * (f_i1y - f_iy)
+                #f_xy = round(f_xy)
+                print("f_xy: " + str(f_xy))
+                if (f_xy > 255):
+                    f_xy = 255
 
-          f_xy[0] = round(f_xy[0])
-          f_xy[1] = round(f_xy[1])
-          f_xy[2] = round(f_xy[2])
-
-          dummy_img_array[ir][jr] = f_xy.copy()
-        else:
-          dummy_img_array[ir][jr][0] = 0
-          dummy_img_array[ir][jr][1] = 0
-          dummy_img_array[ir][jr][1] = 0
-
+                dummy_img_array[ir][jr][0] = f_xy
+                dummy_img_array[ir][jr][1] = f_xy
+                dummy_img_array[ir][jr][2] = f_xy
+            else:
+                dummy_img_array[ir][jr][0] = 0
+                dummy_img_array[ir][jr][1] = 0
+                dummy_img_array[ir][jr][1] = 0
+    
     return Image.fromarray(np.uint8(dummy_img_array), mode = "RGB") # retorna a imagem transformada
+
+# def rotacaoMapeamentoReverso(img_array, theta = 45.0):
+#     cos_theta = math.cos(math.radians(theta))
+#     sin_theta = math.sin(math.radians(theta))
+
+#     c = 0
+#     r = 0
+#     if theta < 90:
+#         r = round((len(img_array) * sin_theta) + (len(img_array[0]) * cos_theta))
+#         c = round((len(img_array) * cos_theta) + (len(img_array[0]) * sin_theta))
+#     elif theta > 90:
+#         r_theta = math.radians(theta - 90)
+#         ar = len(img_array[0])
+#         ac = len(img_array)
+#         c = round((ac * math.cos(r_theta)) + (ar * math.sin(r_theta)))
+#         r = round((ac * math.sin(r_theta)) + (ar * math.cos(r_theta)))
+#     else: # theta = 90
+#         r = len(img_array[0])
+#         c = len(img_array)
+
+#     print("r: " + str(r) + " c: " + str(c))
+
+#     dummy_img_array = np.zeros((r + 1, c + 1, 3), dtype = int)
+#     for ir in range(1, r + 1):
+#       for jr in range(1, c + 1):
+#         x = (ir) * cos_theta + (jr) * sin_theta
+#         y = -(ir) * sin_theta + (jr) * cos_theta
+
+#         print("x: " + str(x) + " y: " + str(y))
+
+#         if (x > 0 and x < len(img_array)-1 and y > 0 and y < len(img_array[0])-1):
+#           lower_i = int(x // 1)
+#           upper_i = int((x // 1) + 1)
+#           lower_j = int(y // 1)
+#           upper_j = int((y // 1) + 1)
+
+#           f_iy = img_array[lower_i][lower_j] + (y - lower_j) * (img_array[lower_i][upper_j] - img_array[lower_i][lower_j])
+#           f_i1y = img_array[upper_i][lower_j] + (y - lower_j) * (img_array[upper_i][upper_j] - img_array[upper_i][lower_j])
+#           f_xy = f_iy + (x - lower_i) * (f_i1y - f_iy)
+
+#           f_xy = round(f_xy)
+
+#           dummy_img_array[ir][jr][0] = f_xy
+#           dummy_img_array[ir][jr][1] = f_xy
+#           dummy_img_array[ir][jr][2] = f_xy
+#         else:
+#           dummy_img_array[ir][jr][0] = 0
+#           dummy_img_array[ir][jr][1] = 0
+#           dummy_img_array[ir][jr][1] = 0
+
+#     return Image.fromarray(np.uint8(dummy_img_array), mode = "RGB") # retorna a imagem transformada
 
 # Função para exibir o módulo da DCT de I, sem o nível DC, e o valor do nível DC
 def moduloDCT(img_array):
