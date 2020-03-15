@@ -117,58 +117,69 @@ def rotacaoMapeamentoDireto(img_array, theta = 0):
     return Image.fromarray(np.uint8(dummy_img_array), mode = "RGB") # retorna a imagem transformada
 
 def rotacaoMapeamentoReverso(img_array, theta = 0):
-    cos_theta = math.cos(math.radians(theta))
-    sin_theta = math.sin(math.radians(theta))
-    
-    upper_bound = left_bound = right_bound = lower_bound = 0
-    for i in range(0, len(img_array)):
-        for j in range(0, len(img_array[0])):
-                map_i = round((i * cos_theta) - (j * sin_theta))
-                map_j = round((i * sin_theta) + (j  * cos_theta))
-                
-                if map_i < upper_bound:
-                    upper_bound = map_i
-                elif map_i > lower_bound:
-                    lower_bound = map_i
-                if map_j < left_bound:
-                    left_bound = map_j
-                elif map_j > right_bound:
-                    right_bound = map_j
-                
-    r = abs(lower_bound - upper_bound)
-    c = abs(right_bound - left_bound)
-    print("r: " + str(r) + " c: " + str(c))
-
-    dummy_img_array = np.zeros((r + 1, c + 1, 3), dtype = int)
-    for ir in range(1, r + 1):
-        for jr in range(1, c + 1):
-            x = (ir - len(img_array)/2) * cos_theta + (jr - len(img_array[0])/2) * sin_theta + len(img_array)/2
-            y = -(ir - len(img_array)/2) * sin_theta + (jr - len(img_array[0])/2) * cos_theta + len(img_array[0])/2
-
-            if (x >= 0 and x < len(img_array)-1 and y >= 0 and y < len(img_array[0])-1):
-                lower_i = int(x // 1)
-                upper_i = int((x // 1) + 1)
-                lower_j = int(y // 1)
-                upper_j = int((y // 1) + 1)
-
-                f_iy = float(img_array[lower_i][lower_j]) + float((y - lower_j)) * float((img_array[lower_i][upper_j] - img_array[lower_i][lower_j]))
-                f_i1y = float(img_array[upper_i][lower_j]) + float((y - lower_j)) * float((img_array[upper_i][upper_j] - img_array[upper_i][lower_j]))
-                f_xy = f_iy + float((x - lower_i)) * float((f_i1y - f_iy))
-
-                #f_xy = round(f_xy)
-                print("f_xy: " + str(f_xy))
-                if (f_xy > 255):
-                    f_xy = 255
-
-                dummy_img_array[ir][jr][0] = f_xy
-                dummy_img_array[ir][jr][1] = f_xy
-                dummy_img_array[ir][jr][2] = f_xy
+    theta = math.radians(theta)
+    width = len(img_array[0])
+    height = len(img_array)
+    diagonal = math.ceil(math.sqrt(width ** 2 + height ** 2))
+    # Centro da imagem
+    centerX = int(width / 2)
+    centerY = int(height / 2)
+    centerDest = diagonal / 2 # Centro da imagem de destino
+    dummy_img_array = np.zeros((diagonal, diagonal))
+    pi = math.pi
+    for i in range(diagonal):
+        for j in range(diagonal):
+            # Converter os indices para coordenadas cartesianas
+            x = j - centerDest
+            y = centerDest - i
+            # Converter cartesiano para polar
+            distance = math.sqrt(x ** 2 + y ** 2) # raio
+            polarAngle = 0
+            if x == 0:
+                if y == 0: # Centro da imagem, não precisa rotacionar
+                    dummy_img_array[i][j] = img_array[centerY][centerX]
+                    continue
+                elif y < 0:
+                    polarAngle = 1.5 * pi
+                else:
+                    polarAngle = 0.5 * pi
             else:
-                dummy_img_array[ir][jr][0] = 0
-                dummy_img_array[ir][jr][1] = 0
-                dummy_img_array[ir][jr][1] = 0
-    
-    return Image.fromarray(np.uint8(dummy_img_array), mode = "RGB") # retorna a imagem transformada
+                polarAngle = math.atan2(y, x)
+            # Rotação reversa
+            polarAngle -= theta
+            # Converter polar para cartesiano
+            trueX = distance * math.cos(polarAngle)
+            trueY = distance * math.sin(polarAngle)
+            trueX = trueX + centerX
+            trueY = centerY - trueY
+            # Cartesiano para os indices da matriz
+            floorX = int(trueX // 1)
+            floorY = int(trueY // 1)
+            ceilX = int(math.ceil(trueX))
+            ceilY = int(math.ceil(trueY))
+            # Verificação de limites
+            if floorX < 0 or ceilX < 0 or floorX >= width or ceilX >= width or floorY < 0 or ceilY < 0 or floorY >= height or ceilY >= height:
+                continue
+            deltaX = trueX - floorX
+            deltaY = trueY - floorY
+            # Vizinhança
+            topLeft = img_array[floorY][floorX]
+            topRight = img_array[floorY][ceilX]
+            bottomLeft = img_array[ceilY][floorX]
+            bottomRight = img_array[ceilY][ceilX]
+            # Interpolação linear pela horizontal superior
+            topColor = (1 - deltaX) * topLeft + deltaX * topRight
+            # Interpolação linear pela horizontal inferior
+            bottomColor = (1 - deltaX) * bottomLeft + deltaX * bottomRight
+            # Interpolação linear pela vertical
+            color = round((1 - deltaY) * topColor + deltaY * bottomColor)
+            # Checagem de limites da cor
+            if color < 0:
+                color = 0
+            elif color > 255:
+                color = 255
+            dummy_img_array[i][j] = color
+    return Image.fromarray(np.uint8(dummy_img_array))
 
 # def rotacaoMapeamentoReverso(img_array, theta = 45.0):
 #     cos_theta = math.cos(math.radians(theta))
