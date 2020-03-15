@@ -181,57 +181,6 @@ def rotacaoMapeamentoReverso(img_array, theta = 0):
             dummy_img_array[i][j] = color
     return Image.fromarray(np.uint8(dummy_img_array))
 
-# def rotacaoMapeamentoReverso(img_array, theta = 45.0):
-#     cos_theta = math.cos(math.radians(theta))
-#     sin_theta = math.sin(math.radians(theta))
-
-#     c = 0
-#     r = 0
-#     if theta < 90:
-#         r = round((len(img_array) * sin_theta) + (len(img_array[0]) * cos_theta))
-#         c = round((len(img_array) * cos_theta) + (len(img_array[0]) * sin_theta))
-#     elif theta > 90:
-#         r_theta = math.radians(theta - 90)
-#         ar = len(img_array[0])
-#         ac = len(img_array)
-#         c = round((ac * math.cos(r_theta)) + (ar * math.sin(r_theta)))
-#         r = round((ac * math.sin(r_theta)) + (ar * math.cos(r_theta)))
-#     else: # theta = 90
-#         r = len(img_array[0])
-#         c = len(img_array)
-
-#     print("r: " + str(r) + " c: " + str(c))
-
-#     dummy_img_array = np.zeros((r + 1, c + 1, 3), dtype = int)
-#     for ir in range(1, r + 1):
-#       for jr in range(1, c + 1):
-#         x = (ir) * cos_theta + (jr) * sin_theta
-#         y = -(ir) * sin_theta + (jr) * cos_theta
-
-#         print("x: " + str(x) + " y: " + str(y))
-
-#         if (x > 0 and x < len(img_array)-1 and y > 0 and y < len(img_array[0])-1):
-#           lower_i = int(x // 1)
-#           upper_i = int((x // 1) + 1)
-#           lower_j = int(y // 1)
-#           upper_j = int((y // 1) + 1)
-
-#           f_iy = img_array[lower_i][lower_j] + (y - lower_j) * (img_array[lower_i][upper_j] - img_array[lower_i][lower_j])
-#           f_i1y = img_array[upper_i][lower_j] + (y - lower_j) * (img_array[upper_i][upper_j] - img_array[upper_i][lower_j])
-#           f_xy = f_iy + (x - lower_i) * (f_i1y - f_iy)
-
-#           f_xy = round(f_xy)
-
-#           dummy_img_array[ir][jr][0] = f_xy
-#           dummy_img_array[ir][jr][1] = f_xy
-#           dummy_img_array[ir][jr][2] = f_xy
-#         else:
-#           dummy_img_array[ir][jr][0] = 0
-#           dummy_img_array[ir][jr][1] = 0
-#           dummy_img_array[ir][jr][1] = 0
-
-#     return Image.fromarray(np.uint8(dummy_img_array), mode = "RGB") # retorna a imagem transformada
-
 # Função para exibir o módulo da DCT de I, sem o nível DC, e o valor do nível DC
 def moduloDCT(img_array):
     dct_array = dct.DCT2D(img_array)
