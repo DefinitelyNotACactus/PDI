@@ -205,11 +205,11 @@ def aproximacaoImagem(img_array, n = 0):
     if n > 0: # mais de um coeficiente a ser mantido
         for i in range(len(dct_array)):
             for j in range(len(dct_array[0])):
-                if(i != 0 and j != 0): # Nao adicionar dc a lista de coeficientes
+                if(i != 0 or j != 0): # Nao adicionar dc a lista de coeficientes
                     list_coeff.append({"abs(Value)": abs(dct_array[i][j]), "Value": dct_array[i][j], "i": i, "j": j})
         # Ordenar a lista de coeficientes pelo valor absoluto e pegar os n maiores coeficientes
-        list_coeff_sorted = sorted(list_coeff, key = lambda x : x['abs(Value)'])
-        top_coeffs = list_coeff_sorted[-n : ]
+        list_coeff_sorted = sorted(list_coeff, key = lambda x : x['abs(Value)'], reverse = True)
+        top_coeffs = list_coeff_sorted[ : n]
         dct_array.fill(0) # zerar o array
         for coeff in top_coeffs: # recolocar os maiores coeficientes no array
             dct_array[coeff['i']][coeff['j']] = coeff['Value']
